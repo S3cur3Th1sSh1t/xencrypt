@@ -1,4 +1,4 @@
-﻿#    Xencrypt - PowerShell crypter
+#    Xencrypt - PowerShell crypter
 #    Copyright (C) 2020 Xentropy ( @SamuelAnttila )
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -38,10 +38,10 @@ function Invoke-Xencrypt {
      It also lets you layer this recursively however many times you want in order to attempt to foil dynamic & heuristic detection.
 
 
-    .PARAMETER InFile
+    .PARAMETER indirectory
     Specifies the script to obfuscate/encrypt.
 
-    .PARAMETER OutFile
+    .PARAMETER outdirectory
     Specifies the output script.
 
     .PARAMETER Iterations
@@ -49,7 +49,7 @@ function Invoke-Xencrypt {
 
     .EXAMPLE
 
-    PS> Invoke-Xencrypt -InFile Invoke-Mimikatz.ps1 -OutFile banana.ps1 -Iterations 3
+    PS> Invoke-Xencrypt -indirectory Invoke-Mimikatz.ps1 -outdirectory banana.ps1 -Iterations 3
 
     .LINK
 
@@ -60,9 +60,9 @@ function Invoke-Xencrypt {
     [CmdletBinding()]
     Param (
         [Parameter(Mandatory,ValueFromPipeline,ValueFromPipelineByPropertyName)]
-        [string] $infile = $(Throw("-InFile is required")),
+        [string] $indirectory = $(Throw("-indirectory is required")),
         [Parameter(Mandatory,ValueFromPipeline,ValueFromPipelineByPropertyName)]
-        [string] $outfile = $(Throw("-OutFile is required")),
+        [string] $outdirectory = $(Throw("-outdirectory is required")),
         [Parameter(Mandatory=$false,ValueFromPipeline,ValueFromPipelineByPropertyName)]
         [string] $iterations = 2
     )
@@ -75,8 +75,11 @@ under certain conditions.
 "
 
         # read
-        Write-Output "[*] Reading '$($infile)' ..."
-        $codebytes = [System.IO.File]::ReadAllBytes($infile)
+        Get-ChildItem "$indirectory" -Filter *.ps1 | 
+        Foreach-Object {
+        $file = $indirectory + $_
+        Write-Output "[*] Reading '$($file)' ..."
+        $codebytes = [System.IO.File]::ReadAllBytes($file)
 
 
         for ($i = 1; $i -le $iterations; $i++) {
@@ -191,8 +194,10 @@ under certain conditions.
             $code = $stub_template -f $b64encrypted, $b64key, (Create-Var), (Create-Var), (Create-Var), (Create-Var), (Create-Var), (Create-Var), (Create-Var), (Create-Var)
             $codebytes = [System.Text.Encoding]::UTF8.GetBytes($code)
         }
-        Write-Output "[*] Writing '$($outfile)' ..."
-        [System.IO.File]::WriteAllText($outfile,$code)
+        $out = $outdirectory + $_
+        Write-Output "[*] Writing '$($out)' ..."
+        [System.IO.File]::WriteAllText($out,$code)
         Write-Output "[+] Done!"
+        }
     }
 }
